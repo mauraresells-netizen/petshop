@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pet Shop — Your One Stop Pet Shop</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Pacifico&display=swap');
+
+:root {
+  --bg: #0A0A0A;
+  --bg2: #111111;
+  --card: #1A1A1A;
+  --card2: #1E1E1E;
+  --red: #CC0000;
+  --red-bright: #E5001C;
+  --yellow: #FFD700;
+  --white: #F5F5F5;
+  --gray: #888888;
+  --border: #2A2A2A;
+  --red-glow: rgba(204,0,0,0.25);
+}
+
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { background:var(--bg); color:var(--white); font-family:'Inter',sans-serif; overflow-x:hidden; line-height:1.6; }
+
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--red); border-radius:3px; }
+
+.container { max-width:1200px; margin:0 auto; padding:0 24px; }
+
+/* ── NAV ── */
+#navbar {
+  position:fixed; top:0; left:0; right:0; z-index:1000;
+  background:rgba(10,10,10,0.96); backdrop-filter:blur(20px);
+  border-bottom:1px solid transparent;
+  transition:border-color .3s, box-shadow .3s;
+}
+#navbar.scrolled { border-bottom-color:var(--red); box-shadow:0 4px 30px rgba(204,0,0,.2); }
+.nav-inner {
+  display:flex; align-items:center; justify-content:space-between;
+  height:72px; max-width:1200px; margin:0 auto; padding:0 24px;
+}
+.nav-logo { text-decoration:none; line-height:1; }
+.nav-logo-name { font-size:1.6rem; font-weight:900; color:var(--white); letter-spacing:-.02em; display:block; }
+.nav-logo-slogan { font-family:'Pacifico',cursive; font-size:.6rem; color:var(--yellow); margin-top:2px; display:block; }
+.nav-links { display:flex; align-items:center; gap:4px; list-style:none; }
+.nav-links a {
+  display:block; padding:8px 14px; color:#ccc; text-decoration:none;
+  font-size:.875rem; font-weight:500; border-radius:6px;
+  transition:color .2s, background .2s; position:relative;
+}
+.nav-links a::after {
+  content:''; position:absolute; bottom:4px; left:14px; right:14px;
+  height:2px; background:var(--red); transform:scaleX(0); transition:transform .2s;
+}
+.nav-links a:hover { color:var(--white); }
+.nav-links a:hover::after { transform:scaleX(1); }
+.nav-right { display:flex; align-items:center; gap:12px; }
+.cart-btn {
+  position:relative; background:none; border:none; cursor:pointer;
+  color:var(--white); font-size:1.4rem; padding:8px;
+  transition:color .2s, transform .15s;
+}
+.cart-btn:hover { color:var(--red); transform:scale(1.1); }
+.cart-badge {
+  position:absolute; top:2px; right:2px;
+  background:var(--red); color:#fff; font-size:.6rem; font-weight:700;
+  width:18px; height:18px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; transform:scale(0); transition:all .2s;
+}
+.cart-badge.show { opacity:1; transform:scale(1); }
+.hamburger {
+  display:none; background:none; border:none; cursor:pointer;
+  flex-direction:column; gap:5px; padding:6px;
+}
+.hamburger span { display:block; width:22px; height:2px; background:var(--white); transition:all .3s; border-radius:2px; }
+.hamburger.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity:0; }
+.hamburger.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+
+/* mobile menu */
+.mob-menu {
+  display:none; position:fixed; top:72px; left:0; right:0;
+  background:rgba(10,10,10,.98); border-bottom:1px solid var(--red);
+  padding:16px; z-index:999; flex-direction:column; gap:4px;
+}
+.mob-menu.open { display:flex; }
+.mob-menu a {
+  color:var(--white); text-decoration:none; font-size:.95rem;
+  font-weight:500; padding:12px 16px; border-radius:8px;
+  transition:background .2s, color .2s;
+}
+.mob-menu a:hover { background:rgba(204,0,0,.1); color:var(--red); }
+
+/* ── CART DRAWER ── */
+.cart-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.7);
+  z-index:2000; opacity:0; pointer-events:none; transition:opacity .3s;
+}
+.cart-overlay.open { opacity:1; pointer-events:all; }
+.cart-drawer {
+  position:fixed; top:0; right:0; width:min(420px,100vw); height:100vh;
+  background:#141414; border-left:1px solid var(--red);
+  z-index:2001; transform:translateX(100%);
+  transition:transform .35s cubic-bezier(.16,1,.3,1);
+  display:flex; flex-direction:column;
+}
+.cart-drawer.open { transform:translateX(0); }
+.cart-head {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:20px 24px; border-bottom:1px solid var(--border);
+}
+.cart-title { font-size:1.2rem; font-weight:800; }
+.cart-close {
+  background:none; border:none; color:var(--white); font-size:1.4rem;
+  cursor:pointer; padding:4px; transition:color .2s; line-height:1;
+}
+.cart-close:hover { color:var(--red); }
+.cart-body { flex:1; overflow-y:auto; padding:16px 24px; }
+.cart-empty { text-align:center; padding:60px 0; color:var(--gray); }
+.cart-empty-icon { font-size:3rem; margin-bottom:12px; }
+.cart-item { display:flex; gap:14px; padding:14px 0; border-bottom:1px solid var(--border); }
+.cart-item-img { width:60px; height:60px; border-radius:8px; overflow:hidden; flex-shrink:0; }
+.cart-item-img img { width:100%; height:100%; object-fit:cover; }
+.cart-item-info { flex:1; min-width:0; }
+.cart-item-name { font-size:.82rem; font-weight:600; margin-bottom:4px; line-height:1.3; }
+.cart-item-price { font-size:.82rem; color:var(--red); font-weight:700; }
+.cart-item-row { display:flex; align-items:center; gap:10px; margin-top:8px; }
+.qty-btn {
+  background:var(--border); border:none; color:var(--white);
+  width:24px; height:24px; border-radius:4px; cursor:pointer;
+  font-size:1rem; display:flex; align-items:center; justify-content:center;
+  transition:background .15s;
+}
+.qty-btn:hover { background:var(--red); }
+.qty-num { font-size:.85rem; font-weight:600; min-width:20px; text-align:center; }
+.rm-btn {
+  background:none; border:none; color:var(--gray); cursor:pointer;
+  font-size:.72rem; margin-left:auto; transition:color .15s; padding:0;
+}
+.rm-btn:hover { color:var(--red); }
+.cart-foot { padding:20px 24px; border-top:1px solid var(--border); }
+.cart-total-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; font-size:1.05rem; font-weight:700; }
+.cart-total-amt { color:var(--red); font-size:1.3rem; }
+.checkout-btn {
+  width:100%; background:var(--red); color:#fff; border:none;
+  padding:15px; border-radius:8px; font-size:.95rem; font-weight:700;
+  cursor:pointer; transition:background .2s, transform .15s; font-family:'Inter',sans-serif;
+}
+.checkout-btn:hover { background:var(--red-bright); transform:translateY(-2px); }
+
+/* ── HERO ── */
+#hero {
+  position:relative; min-height:100vh; display:flex; align-items:center;
+  overflow:hidden; padding-top:72px;
+}
+.hero-bg {
+  position:absolute; inset:0;
+  background:url('https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=1600') center/cover no-repeat;
+  animation:heroPan 18s ease-in-out infinite alternate;
+}
+@keyframes heroPan { from{transform:scale(1.08) translateX(-1%)} to{transform:scale(1.08) translateX(1%)} }
+.hero-overlay {
+  position:absolute; inset:0;
+  background:linear-gradient(135deg, rgba(10,10,10,.97) 0%, rgba(10,10,10,.78) 50%, rgba(10,10,10,.9) 100%);
+}
+.hero-overlay::after {
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(ellipse at 25% 50%, rgba(204,0,0,.13) 0%, transparent 55%);
+}
+#hero-canvas { position:absolute; inset:0; z-index:1; pointer-events:none; }
+.hero-grid {
+  position:relative; z-index:2;
+  max-width:1200px; margin:0 auto; padding:80px 24px;
+  display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center; width:100%;
+}
+.hero-eyebrow {
+  display:inline-flex; align-items:center; gap:8px;
+  background:rgba(204,0,0,.15); border:1px solid rgba(204,0,0,.4);
+  border-radius:100px; padding:6px 16px;
+  font-size:.75rem; font-weight:600; color:var(--red);
+  letter-spacing:.1em; text-transform:uppercase; margin-bottom:22px;
+}
+.hero-h1 {
+  font-size:clamp(2.4rem,5.5vw,4.4rem); font-weight:900;
+  line-height:1.05; letter-spacing:-.03em; margin-bottom:18px;
+}
+.hero-h1 em { font-style:normal; color:var(--red); }
+.hero-sub { font-size:1.05rem; color:#aaa; line-height:1.75; margin-bottom:34px; max-width:460px; }
+.hero-btns { display:flex; gap:14px; flex-wrap:wrap; }
+.btn-primary {
+  background:var(--red); color:#fff; border:2px solid var(--red);
+  padding:13px 28px; font-size:.875rem; font-weight:700; border-radius:8px;
+  cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:8px;
+  transition:background .2s, transform .15s, box-shadow .2s; letter-spacing:.02em;
+  font-family:'Inter',sans-serif;
+}
+.btn-primary:hover { background:var(--red-bright); border-color:var(--red-bright); transform:translateY(-2px); box-shadow:0 8px 24px rgba(204,0,0,.4); }
+.btn-outline {
+  background:transparent; color:var(--white); border:2px solid rgba(245,245,245,.35);
+  padding:13px 28px; font-size:.875rem; font-weight:700; border-radius:8px;
+  cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:8px;
+  transition:all .2s; letter-spacing:.02em; font-family:'Inter',sans-serif;
+}
+.btn-outline:hover { border-color:var(--red); color:var(--red); transform:translateY(-2px); }
+.hero-stats { display:flex; gap:28px; margin-top:44px; flex-wrap:wrap; }
+.hero-stat-divider { width:1px; background:var(--border); }
+.hero-stat-num { font-size:1.8rem; font-weight:900; line-height:1; }
+.hero-stat-lbl { font-size:.75rem; color:var(--gray); margin-top:4px; }
+.hero-imgs { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.hero-img-card { border-radius:14px; overflow:hidden; position:relative; }
+.hero-img-card:first-child { grid-row:span 2; }
+.hero-img-card img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .5s; }
+.hero-img-card:hover img { transform:scale(1.05); }
+.hero-img-card::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(to bottom, transparent 55%, rgba(0,0,0,.65));
+  pointer-events:none;
+}
+.hero-img-label {
+  position:absolute; bottom:10px; left:10px; z-index:1;
+  background:rgba(0,0,0,.65); border:1px solid rgba(204,0,0,.45);
+  color:#fff; font-size:.7rem; font-weight:600;
+  padding:3px 9px; border-radius:100px;
+}
+
+/* ── SCROLL REVEAL ── */
+[data-reveal] { opacity:0; transition:opacity .7s ease, transform .7s ease; }
+[data-reveal="up"]    { transform:translateY(38px); }
+[data-reveal="left"]  { transform:translateX(-38px); }
+[data-reveal="right"] { transform:translateX(38px); }
+[data-reveal="fade"]  { transform:none; }
+[data-reveal].in { opacity:1; transform:none !important; }
+
+/* ── SECTION LABELS ── */
+.sec-label {
+  display:inline-block; color:var(--red);
+  font-size:.72rem; font-weight:700; letter-spacing:.2em;
+  text-transform:uppercase; margin-bottom:10px;
+}
+.sec-title {
+  font-size:clamp(1.8rem,4vw,3rem); font-weight:800;
+  line-height:1.1; letter-spacing:-.02em; margin-bottom:14px;
+}
+.sec-sub { color:var(--gray); font-size:1rem; max-width:580px; line-height:1.7; }
+
+/* ── ANIMALS ── */
+#animals { padding:90px 0 50px; }
+.animals-hd { text-align:center; margin-bottom:44px; }
+.animals-hd .sec-sub { margin:0 auto; }
+.animal-row { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; }
+.animal-card {
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+  cursor:pointer; padding:14px; border-radius:14px; border:2px solid transparent;
+  transition:border-color .2s, background .2s, transform .2s; min-width:90px;
+}
+.animal-card:hover, .animal-card.active {
+  border-color:var(--red); background:rgba(204,0,0,.08); transform:translateY(-4px);
+}
+.animal-circle {
+  width:76px; height:76px; border-radius:50%; overflow:hidden;
+  border:2.5px solid var(--border); transition:border-color .2s, box-shadow .2s;
+}
+.animal-card:hover .animal-circle,
+.animal-card.active .animal-circle { border-color:var(--red); box-shadow:0 0 18px var(--red-glow); }
+.animal-circle img { width:100%; height:100%; object-fit:cover; display:block; }
+.animal-name { font-size:.78rem; font-weight:600; color:var(--white); text-align:center; }
+
+/* ── SHOP ── */
+#shop { padding:30px 0 90px; }
+.shop-hd { margin-bottom:32px; }
+.shop-controls { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:24px; }
+.search-wrap { flex:1; min-width:200px; position:relative; }
+.search-icon {
+  position:absolute; left:13px; top:50%; transform:translateY(-50%);
+  color:var(--gray); pointer-events:none; width:16px; height:16px;
+}
+#search-inp {
+  width:100%; background:var(--card); border:1px solid var(--border); color:var(--white);
+  padding:11px 14px 11px 40px; border-radius:8px; font-size:.875rem;
+  font-family:'Inter',sans-serif; transition:border-color .2s, box-shadow .2s;
+}
+#search-inp:focus { outline:none; border-color:var(--red); box-shadow:0 0 0 3px rgba(204,0,0,.1); }
+#search-inp::placeholder { color:var(--gray); }
+#sort-sel {
+  background:var(--card); border:1px solid var(--border); color:var(--white);
+  padding:11px 14px; border-radius:8px; font-size:.875rem;
+  font-family:'Inter',sans-serif; cursor:pointer; transition:border-color .2s; min-width:175px;
+}
+#sort-sel:focus { outline:none; border-color:var(--red); }
+.prod-count { color:var(--gray); font-size:.85rem; margin-bottom:22px; }
+.prod-count strong { color:var(--white); }
+.prod-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(235px,1fr)); gap:22px; }
+.prod-card {
+  background:var(--card); border:1px solid var(--border); border-radius:14px;
+  overflow:hidden; transition:transform .3s, box-shadow .3s, border-color .3s; position:relative;
+}
+.prod-card:hover { transform:translateY(-6px); box-shadow:0 18px 40px rgba(204,0,0,.2); border-color:rgba(204,0,0,.35); }
+.prod-img { position:relative; aspect-ratio:4/3; overflow:hidden; }
+.prod-img img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .4s; }
+.prod-card:hover .prod-img img { transform:scale(1.06); }
+.prod-cat-badge {
+  position:absolute; top:10px; left:10px;
+  background:var(--red); color:#fff; font-size:.62rem; font-weight:700;
+  padding:3px 9px; border-radius:100px; text-transform:uppercase; letter-spacing:.05em;
+}
+.prod-new-badge {
+  position:absolute; top:10px; right:10px;
+  background:var(--yellow); color:#000; font-size:.62rem; font-weight:700;
+  padding:3px 9px; border-radius:100px; text-transform:uppercase; letter-spacing:.05em;
+}
+.prod-info { padding:14px; }
+.prod-name { font-size:.875rem; font-weight:700; margin-bottom:8px; line-height:1.35; }
+.prod-rating { display:flex; align-items:center; gap:6px; margin-bottom:12px; }
+.stars { color:var(--yellow); font-size:.8rem; letter-spacing:.5px; }
+.rev-ct { font-size:.72rem; color:var(--gray); }
+.prod-foot { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.prod-price { font-size:1.2rem; font-weight:800; }
+.atc-btn {
+  background:var(--red); color:#fff; border:none; padding:8px 15px;
+  border-radius:7px; font-size:.78rem; font-weight:700; cursor:pointer;
+  transition:background .15s, transform .15s; font-family:'Inter',sans-serif; white-space:nowrap;
+}
+.atc-btn:hover { background:var(--red-bright); transform:scale(1.04); }
+.no-prod { text-align:center; padding:60px; color:var(--gray); grid-column:1/-1; font-size:.95rem; }
+
+/* ── FACTS ── */
+#facts { padding:90px 0; background:var(--bg2); }
+.facts-hd { text-align:center; margin-bottom:48px; }
+.facts-hd .sec-sub { margin:0 auto; }
+.facts-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
+.fact-card {
+  background:var(--card); border-radius:14px; border-left:4px solid var(--red);
+  padding:26px 24px; transition:transform .3s, box-shadow .3s;
+}
+.fact-card:hover { transform:translateY(-4px); box-shadow:0 12px 30px rgba(204,0,0,.15); }
+.fact-icon { font-size:1.8rem; margin-bottom:10px; display:block; }
+.fact-lbl { font-size:.68rem; font-weight:700; letter-spacing:.15em; color:var(--yellow); text-transform:uppercase; margin-bottom:7px; }
+.fact-txt { font-size:.875rem; color:#ccc; line-height:1.75; }
+
+/* ── WHY ── */
+#why { padding:90px 0; }
+.why-hd { text-align:center; margin-bottom:48px; }
+.why-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:20px; }
+.why-card {
+  background:var(--card); border:1px solid var(--border); border-radius:14px;
+  padding:32px 24px; text-align:center;
+  transition:border-color .2s, transform .3s, box-shadow .3s;
+}
+.why-card:hover { border-color:var(--red); transform:translateY(-6px); box-shadow:0 16px 36px rgba(204,0,0,.15); }
+.why-icon { font-size:2.2rem; margin-bottom:18px; display:block; }
+.why-title { font-size:.95rem; font-weight:700; margin-bottom:10px; }
+.why-txt { font-size:.85rem; color:var(--gray); line-height:1.7; }
+
+/* ── NEWSLETTER ── */
+#newsletter {
+  padding:90px 0; position:relative; overflow:hidden;
+  background:linear-gradient(135deg, #0e0000 0%, var(--bg) 50%, #0e0000 100%);
+}
+#newsletter::before {
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(ellipse at 50% 50%, rgba(204,0,0,.1) 0%, transparent 65%);
+  pointer-events:none;
+}
+.nl-inner { text-align:center; max-width:540px; margin:0 auto; position:relative; z-index:1; }
+.nl-title { font-size:clamp(1.7rem,4vw,2.6rem); font-weight:800; letter-spacing:-.02em; margin-bottom:14px; }
+.nl-title em { font-style:normal; color:var(--red); }
+.nl-sub { color:var(--gray); margin-bottom:32px; font-size:.95rem; }
+.nl-form { display:flex; gap:10px; }
+.nl-input {
+  flex:1; background:rgba(255,255,255,.05); border:1px solid var(--border);
+  color:var(--white); padding:13px 18px; border-radius:8px;
+  font-size:.875rem; font-family:'Inter',sans-serif; transition:border-color .2s;
+}
+.nl-input:focus { outline:none; border-color:var(--red); }
+.nl-input::placeholder { color:var(--gray); }
+.nl-note { margin-top:13px; font-size:.72rem; color:var(--gray); }
+
+/* ── TESTIMONIALS ── */
+#testimonials { padding:90px 0; background:var(--bg2); }
+.testi-hd { text-align:center; margin-bottom:48px; }
+.testi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:20px; }
+.testi-card {
+  background:var(--card); border:1px solid var(--border); border-radius:14px;
+  padding:28px; transition:border-color .2s, transform .3s;
+}
+.testi-card:hover { border-color:rgba(204,0,0,.3); transform:translateY(-4px); }
+.testi-stars { color:var(--yellow); font-size:1rem; margin-bottom:14px; letter-spacing:1px; }
+.testi-txt { font-size:.875rem; color:#ccc; line-height:1.8; margin-bottom:20px; font-style:italic; }
+.testi-author { display:flex; align-items:center; gap:12px; }
+.testi-avatar {
+  width:42px; height:42px; border-radius:50%; background:var(--red);
+  display:flex; align-items:center; justify-content:center;
+  font-size:.95rem; font-weight:700; color:#fff; flex-shrink:0;
+}
+.testi-name { font-size:.85rem; font-weight:700; }
+.testi-pet { font-size:.72rem; color:var(--gray); margin-top:2px; }
+
+/* ── FOOTER ── */
+footer { background:#060606; border-top:2px solid var(--red); padding:60px 0 28px; }
+.foot-grid { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:44px; margin-bottom:44px; }
+.foot-logo-name { font-size:1.5rem; font-weight:900; letter-spacing:-.02em; margin-bottom:3px; }
+.foot-logo-slogan { font-family:'Pacifico',cursive; font-size:.7rem; color:var(--yellow); margin-bottom:14px; display:block; }
+.foot-desc { font-size:.85rem; color:var(--gray); line-height:1.7; max-width:270px; margin-bottom:22px; }
+.social-row { display:flex; gap:10px; }
+.social-a {
+  width:38px; height:38px; border-radius:8px; background:var(--card);
+  border:1px solid var(--border); display:flex; align-items:center; justify-content:center;
+  color:var(--gray); text-decoration:none; font-size:1rem;
+  transition:border-color .2s, color .2s, background .2s;
+}
+.social-a:hover { border-color:var(--red); color:var(--red); background:rgba(204,0,0,.1); }
+.foot-col-title { font-size:.75rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; margin-bottom:18px; }
+.foot-links { list-style:none; display:flex; flex-direction:column; gap:9px; }
+.foot-links a { color:var(--gray); text-decoration:none; font-size:.85rem; transition:color .2s; display:flex; align-items:center; gap:5px; }
+.foot-links a:hover { color:var(--red); }
+.foot-contact { display:flex; flex-direction:column; gap:11px; }
+.fc-item { display:flex; align-items:flex-start; gap:9px; font-size:.85rem; color:var(--gray); }
+.fc-icon { color:var(--red); flex-shrink:0; margin-top:1px; }
+.foot-bottom {
+  border-top:1px solid var(--border); padding-top:22px;
+  display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;
+}
+.foot-copy { font-size:.78rem; color:var(--gray); }
+.foot-badges { display:flex; gap:10px; }
+.foot-badge { background:var(--card); border:1px solid var(--border); border-radius:5px; padding:4px 10px; font-size:.68rem; color:var(--gray); }
+
+/* ── RESPONSIVE ── */
+@media(max-width:1024px) { .foot-grid { grid-template-columns:1fr 1fr; gap:30px; } }
+@media(max-width:768px) {
+  .nav-links { display:none; }
+  .hamburger { display:flex; }
+  .hero-grid { grid-template-columns:1fr; gap:40px; padding:60px 24px; }
+  .hero-imgs { display:none; }
+  .nl-form { flex-direction:column; }
+  .foot-grid { grid-template-columns:1fr; gap:28px; }
+  .foot-bottom { flex-direction:column; text-align:center; }
+}
+@media(max-width:480px) {
+  .why-grid, .facts-grid, .testi-grid { grid-template-columns:1fr; }
+  .prod-grid { grid-template-columns:1fr; }
+  .hero-stats { gap:18px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <a class="nav-logo" href="#hero">
+      <span class="nav-logo-name">PET SHOP</span>
+      <span class="nav-logo-slogan">the pet shop, your one stop pet shop</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#hero">Home</a></li>
+      <li><a href="#shop">Shop</a></li>
+      <li><a href="#animals">Animals</a></li>
+      <li><a href="#why">About</a></li>
+      <li><a href="#newsletter">Contact</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="cart-btn" id="cart-toggle" aria-label="Open cart">
+        🛒<span class="cart-badge" id="cart-badge">0</span>
+      </button>
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="mob-menu" id="mob-menu">
+  <a href="#hero"       onclick="closeMob()">Home</a>
+  <a href="#shop"       onclick="closeMob()">Shop</a>
+  <a href="#animals"    onclick="closeMob()">Animals</a>
+  <a href="#why"        onclick="closeMob()">About</a>
+  <a href="#newsletter" onclick="closeMob()">Contact</a>
+</div>
+
+<!-- CART -->
+<div class="cart-overlay" id="cart-overlay"></div>
+<div class="cart-drawer" id="cart-drawer">
+  <div class="cart-head">
+    <span class="cart-title">Your Cart 🛒</span>
+    <button class="cart-close" id="cart-close">✕</button>
+  </div>
+  <div class="cart-body" id="cart-body"></div>
+  <div class="cart-foot" id="cart-foot" style="display:none">
+    <div class="cart-total-row">
+      <span>Total</span>
+      <span class="cart-total-amt" id="cart-total">£0.00</span>
+    </div>
+    <button class="checkout-btn" onclick="alert('Thank you! Checkout coming soon.')">Proceed to Checkout →</button>
+  </div>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-grid">
+    <div data-reveal="left">
+      <div class="hero-eyebrow">🐾 The UK's #1 Online Pet Store</div>
+      <h1 class="hero-h1">Everything<br><em>Your Pet</em><br>Deserves</h1>
+      <p class="hero-sub">Premium food, toys, accessories and more — for every animal you love. Trusted by over 50,000 happy pet owners across the UK.</p>
+      <div class="hero-btns">
+        <a href="#shop"    class="btn-primary">🛍️ Shop Now</a>
+        <a href="#animals" class="btn-outline">Browse by Animal →</a>
+      </div>
+      <div class="hero-stats">
+        <div><div class="hero-stat-num">50K+</div><div class="hero-stat-lbl">Happy Customers</div></div>
+        <div class="hero-stat-divider"></div>
+        <div><div class="hero-stat-num">500+</div><div class="hero-stat-lbl">Products</div></div>
+        <div class="hero-stat-divider"></div>
+        <div><div class="hero-stat-num">4.9★</div><div class="hero-stat-lbl">Avg Rating</div></div>
+      </div>
+    </div>
+    <div class="hero-imgs" data-reveal="right">
+      <div class="hero-img-card" style="aspect-ratio:unset">
+        <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=500" alt="Golden Retriever" loading="lazy">
+        <div class="hero-img-label">🐶 Dogs</div>
+      </div>
+      <div class="hero-img-card" style="aspect-ratio:1">
+        <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400" alt="Cat" loading="lazy">
+        <div class="hero-img-label">🐱 Cats</div>
+      </div>
+      <div class="hero-img-card" style="aspect-ratio:1">
+        <img src="https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=400" alt="Parrot" loading="lazy">
+        <div class="hero-img-label">🦜 Birds</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ANIMALS -->
+<section id="animals" style="padding:90px 0 50px">
+  <div class="container">
+    <div class="animals-hd" data-reveal="up">
+      <div class="sec-label">Browse by Animal</div>
+      <h2 class="sec-title">Find What Your Pet Needs</h2>
+      <p class="sec-sub">Click an animal to filter our full range of premium products.</p>
+    </div>
+    <div class="animal-row" data-reveal="up">
+      <div class="animal-card active" data-filter="all">
+        <div class="animal-circle"><img src="https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=200" alt="All"></div>
+        <span class="animal-name">🐾 All Pets</span>
+      </div>
+      <div class="animal-card" data-filter="dogs">
+        <div class="animal-circle"><img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=200" alt="Dogs"></div>
+        <span class="animal-name">🐶 Dogs</span>
+      </div>
+      <div class="animal-card" data-filter="cats">
+        <div class="animal-circle"><img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200" alt="Cats"></div>
+        <span class="animal-name">🐱 Cats</span>
+      </div>
+      <div class="animal-card" data-filter="rabbits">
+        <div class="animal-circle"><img src="https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=200" alt="Rabbits"></div>
+        <span class="animal-name">🐰 Rabbits</span>
+      </div>
+      <div class="animal-card" data-filter="birds">
+        <div class="animal-circle"><img src="https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=200" alt="Birds"></div>
+        <span class="animal-name">🐦 Birds</span>
+      </div>
+      <div class="animal-card" data-filter="fish">
+        <div class="animal-circle"><img src="https://images.unsplash.com/photo-1535591273668-578e31182c4f?w=200" alt="Fish"></div>
+        <span class="animal-name">🐟 Fish</span>
+      </div>
+      <div class="animal-card" data-filter="small-pets">
+        <div class="animal-circle"><img src="https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=200" alt="Small Pets"></div>
+        <span class="animal-name">🐹 Small Pets</span>
+      </div>
+      <div class="animal-card" data-filter="reptiles">
+        <div class="animal-circle"><img src="https://images.unsplash.com/photo-1504450874802-0ba2bcd9b5ae?w=200" alt="Reptiles"></div>
+        <span class="animal-name">🦎 Reptiles</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SHOP -->
+<section id="shop" style="padding:30px 0 90px">
+  <div class="container">
+    <div class="shop-hd" data-reveal="up">
+      <div class="sec-label">Our Products</div>
+      <h2 class="sec-title">Premium Pet Shop</h2>
+      <p class="sec-sub" style="margin-bottom:0">Everything your beloved pet needs — vet-approved and carefully selected.</p>
+    </div>
+    <div class="shop-controls" style="margin-top:28px">
+      <div class="search-wrap">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search-inp" placeholder="Search products…" autocomplete="off">
+      </div>
+      <select id="sort-sel">
+        <option value="default">Sort: Default</option>
+        <option value="price-asc">Price: Low → High</option>
+        <option value="price-desc">Price: High → Low</option>
+        <option value="rating">Top Rated</option>
+        <option value="newest">Newest First</option>
+      </select>
+    </div>
+    <p class="prod-count" id="prod-count">Showing <strong id="count-n">27</strong> products</p>
+    <div class="prod-grid" id="prod-grid"></div>
+  </div>
+</section>
+
+<!-- FACTS -->
+<section id="facts" style="padding:90px 0;background:var(--bg2)">
+  <div class="container">
+    <div class="facts-hd" data-reveal="up">
+      <div class="sec-label">Pet Tips & Trivia</div>
+      <h2 class="sec-title">Did You Know? 💡</h2>
+      <p class="sec-sub">Expert tips and fun facts to help you be the best pet parent possible.</p>
+    </div>
+    <div class="facts-grid">
+      <div class="fact-card" data-reveal="up" data-delay="0">
+        <span class="fact-icon">🐶</span>
+        <div class="fact-lbl">Did You Know?</div>
+        <p class="fact-txt">Dogs have a sense of smell <strong>40× stronger than humans</strong> — choose unscented cleaning products near their sleeping area to avoid overwhelming their senses.</p>
+      </div>
+      <div class="fact-card" data-reveal="up" data-delay="80">
+        <span class="fact-icon">🐱</span>
+        <div class="fact-lbl">Did You Know?</div>
+        <p class="fact-txt">Cats need <strong>fresh water daily</strong> — consider a pet water fountain to encourage hydration and support long-term kidney health.</p>
+      </div>
+      <div class="fact-card" data-reveal="up" data-delay="160">
+        <span class="fact-icon">🐰</span>
+        <div class="fact-lbl">Did You Know?</div>
+        <p class="fact-txt">Rabbits are <strong>social animals</strong> and do best in bonded pairs — they can become lonely and depressed if kept alone for extended periods.</p>
+      </div>
+      <div class="fact-card" data-reveal="up" data-delay="0">
+        <span class="fact-icon">🐟</span>
+        <div class="fact-lbl">Did You Know?</div>
+        <p class="fact-txt">Fish can <strong>recognise their owners' faces</strong> — enrich their tanks with plants and hiding spots for a happy, stimulated, and stress-free fish.</p>
+      </div>
+      <div class="fact-card" data-reveal="up" data-delay="80">
+        <span class="fact-icon">🐦</span>
+        <div class="fact-lbl">Did You Know?</div>
+        <p class="fact-txt">Birds need <strong>mental stimulation</strong> daily — rotate their toys every week to prevent boredom, reduce stress, and keep them mentally sharp.</p>
+      </div>
+      <div class="fact-card" data-reveal="up" data-delay="160">
+        <span class="fact-icon">🐹</span>
+        <div class="fact-lbl">Did You Know?</div>
+        <p class="fact-txt">Guinea pigs <strong>cannot produce their own Vitamin C</strong> — supplement their diet with fresh bell peppers or leafy greens daily to prevent scurvy.</p>
+      </div>
+      <div class="fact-card" data-reveal="up" data-delay="0">
+        <span class="fact-icon">🦎</span>
+        <div class="fact-lbl">Did You Know?</div>
+        <p class="fact-txt">Reptiles are cold-blooded and <strong>cannot regulate their own body temperature</strong> — a proper heat gradient in their enclosure is essential for digestion and immunity.</p>
+      </div>
+      <div class="fact-card" data-reveal="up" data-delay="80">
+        <span class="fact-icon">🐾</span>
+        <div class="fact-lbl">Did You Know?</div>
+        <p class="fact-txt">Pets with <strong>consistent routines and enrichment</strong> live longer, healthier lives — interactive play reduces stress hormones and supports overall wellbeing.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY CHOOSE US -->
+<section id="why" style="padding:90px 0">
+  <div class="container">
+    <div class="why-hd" data-reveal="up">
+      <div class="sec-label">Why Pet Shop?</div>
+      <h2 class="sec-title">The UK's Most Trusted<br>Online Pet Store</h2>
+    </div>
+    <div class="why-grid">
+      <div class="why-card" data-reveal="up" data-delay="0">
+        <span class="why-icon">🚚</span>
+        <div class="why-title">Free Delivery Over £40</div>
+        <p class="why-txt">Free UK delivery on all orders over £40. Express next-day delivery available. Eco-friendly packaging on every shipment.</p>
+      </div>
+      <div class="why-card" data-reveal="up" data-delay="80">
+        <span class="why-icon">✅</span>
+        <div class="why-title">Vet-Approved Products</div>
+        <p class="why-txt">Every product in our range is reviewed and recommended by qualified UK veterinarians. Your pet's health comes first.</p>
+      </div>
+      <div class="why-card" data-reveal="up" data-delay="160">
+        <span class="why-icon">💬</span>
+        <div class="why-title">Expert Pet Advice</div>
+        <p class="why-txt">Our team of pet care specialists are available 7 days a week to help you choose the right products for your specific animal.</p>
+      </div>
+      <div class="why-card" data-reveal="up" data-delay="240">
+        <span class="why-icon">⭐</span>
+        <div class="why-title">5-Star Customer Care</div>
+        <p class="why-txt">Over 50,000 verified 5-star reviews. 30-day hassle-free returns. We're not happy unless your pet is happy.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NEWSLETTER -->
+<section id="newsletter" style="padding:90px 0;position:relative;overflow:hidden;background:linear-gradient(135deg,#0e0000 0%,#0A0A0A 50%,#0e0000 100%)">
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(204,0,0,.1) 0%,transparent 65%);pointer-events:none"></div>
+  <div class="container" style="position:relative;z-index:1">
+    <div class="nl-inner" data-reveal="up">
+      <div class="sec-label">Stay in the Loop</div>
+      <h2 class="nl-title">Get Pet Tips &<br><em>Exclusive Deals</em></h2>
+      <p class="nl-sub">Join 25,000+ pet lovers who get weekly care tips, new product alerts, and exclusive member-only discounts straight to their inbox.</p>
+      <form class="nl-form" id="nl-form">
+        <input type="email" class="nl-input" placeholder="Enter your email address…" required>
+        <button type="submit" class="btn-primary" id="nl-btn">Subscribe 🐾</button>
+      </form>
+      <p class="nl-note">No spam, ever. Unsubscribe anytime. 💌</p>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials" style="padding:90px 0;background:var(--bg2)">
+  <div class="container">
+    <div class="testi-hd" data-reveal="up">
+      <div class="sec-label">Customer Reviews</div>
+      <h2 class="sec-title">What Pet Parents Say</h2>
+    </div>
+    <div class="testi-grid">
+      <div class="testi-card" data-reveal="left">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-txt">"Absolutely brilliant service! My golden retriever Max has never been happier. The grain-free food completely transformed his coat — it's shinier than ever. Next-day delivery too. Will definitely order again!"</p>
+        <div class="testi-author">
+          <div class="testi-avatar">S</div>
+          <div><div class="testi-name">Sarah M.</div><div class="testi-pet">🐶 Golden Retriever owner, London</div></div>
+        </div>
+      </div>
+      <div class="testi-card" data-reveal="up">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-txt">"I was sceptical ordering online for my cats, but Pet Shop completely won me over. The cat tree quality is exceptional — my two Persians have completely claimed it. Customer service was incredibly helpful too!"</p>
+        <div class="testi-author">
+          <div class="testi-avatar">J</div>
+          <div><div class="testi-name">James T.</div><div class="testi-pet">🐱 Persian Cat owner, Manchester</div></div>
+        </div>
+      </div>
+      <div class="testi-card" data-reveal="right">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-txt">"Found everything for my bearded dragon in one place — the heating mat, UV lamp, and supplements all arrived perfectly packaged. The reptile care advice section is genuinely excellent. Highly recommend!"</p>
+        <div class="testi-author">
+          <div class="testi-avatar">A</div>
+          <div><div class="testi-name">Amy R.</div><div class="testi-pet">🦎 Bearded Dragon owner, Bristol</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-logo-name">PET SHOP</div>
+        <span class="foot-logo-slogan">the pet shop, your one stop pet shop</span>
+        <p class="foot-desc">The UK's most loved online pet store. Premium products, expert advice, and unbeatable prices for every animal you love.</p>
+        <div class="social-row">
+          <a class="social-a" href="#" aria-label="Facebook">f</a>
+          <a class="social-a" href="#" aria-label="Instagram">📷</a>
+          <a class="social-a" href="#" aria-label="Twitter/X">𝕏</a>
+          <a class="social-a" href="#" aria-label="TikTok">♪</a>
+        </div>
+      </div>
+      <div>
+        <div class="foot-col-title">Quick Links</div>
+        <ul class="foot-links">
+          <li><a href="#hero">→ Home</a></li>
+          <li><a href="#shop">→ Shop</a></li>
+          <li><a href="#animals">→ Animals</a></li>
+          <li><a href="#facts">→ Pet Tips</a></li>
+          <li><a href="#why">→ About Us</a></li>
+          <li><a href="#newsletter">→ Contact</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="foot-col-title">Animal Categories</div>
+        <ul class="foot-links">
+          <li><a href="#animals">🐶 Dogs</a></li>
+          <li><a href="#animals">🐱 Cats</a></li>
+          <li><a href="#animals">🐰 Rabbits</a></li>
+          <li><a href="#animals">🐦 Birds</a></li>
+          <li><a href="#animals">🐟 Fish</a></li>
+          <li><a href="#animals">🐹 Small Pets</a></li>
+          <li><a href="#animals">🦎 Reptiles</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="foot-col-title">Contact Us</div>
+        <div class="foot-contact">
+          <div class="fc-item"><span class="fc-icon">📍</span><span>123 Pet Street, London, UK, EC1A 1BB</span></div>
+          <div class="fc-item"><span class="fc-icon">📞</span><span>0800 123 4567</span></div>
+          <div class="fc-item"><span class="fc-icon">✉️</span><span>hello@petshop.co.uk</span></div>
+          <div class="fc-item"><span class="fc-icon">🕐</span><span>Mon–Sat: 9am–6pm<br>Sun: 10am–4pm</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span class="foot-copy">© 2025 Pet Shop. All rights reserved. Made with ❤️ for pets.</span>
+      <div class="foot-badges">
+        <span class="foot-badge">🔒 Secure Payments</span>
+        <span class="foot-badge">🚚 Free UK Delivery</span>
+        <span class="foot-badge">✅ Vet Approved</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════
+// PRODUCT DATA
+// ═══════════════════════════════════════════
+const PRODUCTS = [
+  // DOGS
+  { id:1,  name:'Premium Grain-Free Dog Food 2kg',        cat:'dogs',       emoji:'🐶', price:24.99, rating:4.8, reviews:142, img:'https://images.unsplash.com/photo-1568640347023-a616a30bc3bd?w=400', isNew:true  },
+  { id:2,  name:'Interactive Rope & Tug Dog Toy Set',     cat:'dogs',       emoji:'🐶', price:12.99, rating:4.6, reviews:89,  img:'https://images.unsplash.com/photo-1526947425960-945c6e72858f?w=400', isNew:false },
+  { id:3,  name:'Luxury Orthopaedic Dog Bed — Large',     cat:'dogs',       emoji:'🐶', price:49.99, rating:4.9, reviews:203, img:'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=400', isNew:false },
+  { id:4,  name:'Adjustable Genuine Leather Dog Collar',  cat:'dogs',       emoji:'🐶', price:18.99, rating:4.5, reviews:67,  img:'https://images.unsplash.com/photo-1601758003122-53c40e686a19?w=400', isNew:false },
+  { id:5,  name:'Salmon & Sweet Potato Dog Treats 200g',  cat:'dogs',       emoji:'🐶', price:7.99,  rating:4.7, reviews:156, img:'https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=400', isNew:true  },
+  { id:6,  name:'Heavy-Duty Retractable Dog Lead 5m',     cat:'dogs',       emoji:'🐶', price:14.99, rating:4.4, reviews:91,  img:'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400', isNew:false },
+  // CATS
+  { id:7,  name:'Premium Chicken Adult Cat Food 2kg',     cat:'cats',       emoji:'🐱', price:16.99, rating:4.6, reviews:118, img:'https://images.unsplash.com/photo-1574144611937-0df059b5ef3e?w=400', isNew:false },
+  { id:8,  name:'Feather & Bell Interactive Cat Wand',    cat:'cats',       emoji:'🐱', price:9.99,  rating:4.8, reviews:224, img:'https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=400', isNew:false },
+  { id:9,  name:'Deluxe 5-Tier Cat Tree & Scratcher',     cat:'cats',       emoji:'🐱', price:89.99, rating:4.9, reviews:178, img:'https://images.unsplash.com/photo-1583511655826-05700d52f4d9?w=400', isNew:true  },
+  { id:10, name:'Clumping Lavender Cat Litter 10L',       cat:'cats',       emoji:'🐱', price:11.99, rating:4.5, reviews:89,  img:'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400', isNew:false },
+  { id:11, name:'Stainless Steel Cat Bowl Set — 2 Pack',  cat:'cats',       emoji:'🐱', price:15.99, rating:4.7, reviews:62,  img:'https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=400', isNew:false },
+  // RABBITS
+  { id:12, name:'Supreme Science Rabbit Pellets 1.5kg',   cat:'rabbits',    emoji:'🐰', price:13.99, rating:4.7, reviews:94,  img:'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=400', isNew:false },
+  { id:13, name:'XL Indoor Rabbit Hutch — Double Storey', cat:'rabbits',    emoji:'🐰', price:129.99,rating:4.8, reviews:56,  img:'https://images.unsplash.com/photo-1452857297128-d9c29adba80b?w=400', isNew:false },
+  { id:14, name:'Timothy Hay Bundle & Feeder Ball',       cat:'rabbits',    emoji:'🐰', price:19.99, rating:4.6, reviews:73,  img:'https://images.unsplash.com/photo-1548802673-380ab8ebc7b7?w=400', isNew:true  },
+  { id:15, name:'Rabbit Mineral Lick & Apple Wood Chew',  cat:'rabbits',    emoji:'🐰', price:8.99,  rating:4.5, reviews:41,  img:'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=400&crop=right&fit=crop', isNew:false },
+  // BIRDS
+  { id:16, name:'Premium Parrot Seed Mix 1kg',            cat:'birds',      emoji:'🐦', price:10.99, rating:4.8, reviews:134, img:'https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=400', isNew:false },
+  { id:17, name:'Large Powder-Coated Steel Bird Cage',    cat:'birds',      emoji:'🐦', price:79.99, rating:4.7, reviews:67,  img:'https://images.unsplash.com/photo-1548286978-f218023f8d18?w=400', isNew:false },
+  { id:18, name:'Rope Swing & Foraging Toy Bundle',       cat:'birds',      emoji:'🐦', price:14.99, rating:4.6, reviews:88,  img:'https://images.unsplash.com/photo-1559715541-b4981f05a7c4?w=400', isNew:true  },
+  { id:19, name:'Budgie & Canary Egg Food Mix 500g',      cat:'birds',      emoji:'🐦', price:6.99,  rating:4.5, reviews:53,  img:'https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=400&crop=right&fit=crop', isNew:false },
+  // FISH
+  { id:20, name:'Tropical Colour Flakes — Premium 200g',  cat:'fish',       emoji:'🐟', price:8.99,  rating:4.7, reviews:211, img:'https://images.unsplash.com/photo-1535591273668-578e31182c4f?w=400', isNew:false },
+  { id:21, name:'60L Aquarium Starter Kit with Filter',   cat:'fish',       emoji:'🐟', price:119.99,rating:4.8, reviews:89,  img:'https://images.unsplash.com/photo-1520302519878-be31d80cc46e?w=400', isNew:false },
+  { id:22, name:'Aquarium Full-Spectrum LED Light Strip',  cat:'fish',       emoji:'🐟', price:29.99, rating:4.6, reviews:76,  img:'https://images.unsplash.com/photo-1512068697647-b63b1e63e9f8?w=400', isNew:true  },
+  { id:23, name:'Aquarium Biological Filter Pump 600L/h', cat:'fish',       emoji:'🐟', price:34.99, rating:4.7, reviews:64,  img:'https://images.unsplash.com/photo-1535591273668-578e31182c4f?w=400&crop=right&fit=crop', isNew:false },
+  // SMALL PETS
+  { id:24, name:'Silent Spinning Hamster Wheel 21cm',     cat:'small-pets', emoji:'🐹', price:16.99, rating:4.8, reviews:145, img:'https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=400', isNew:false },
+  { id:25, name:'Guinea Pig & Hamster Complete Food 2kg', cat:'small-pets', emoji:'🐹', price:14.99, rating:4.6, reviews:92,  img:'https://images.unsplash.com/photo-1477065037507-f1c9e3c0254c?w=400', isNew:false },
+  { id:26, name:'Wooden Small Animal Hideout & Den',      cat:'small-pets', emoji:'🐹', price:22.99, rating:4.7, reviews:58,  img:'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=400', isNew:true  },
+  // REPTILES
+  { id:27, name:'Reptile Ceramic Heating Mat 28W',        cat:'reptiles',   emoji:'🦎', price:34.99, rating:4.7, reviews:63,  img:'https://images.unsplash.com/photo-1504450874802-0ba2bcd9b5ae?w=400', isNew:false },
+  { id:28, name:'Bearded Dragon UVB Lamp Kit 100W',       cat:'reptiles',   emoji:'🦎', price:44.99, rating:4.8, reviews:48,  img:'https://images.unsplash.com/photo-1569428034239-f9565e32e224?w=400', isNew:true  },
+  { id:29, name:'Reptile Calcium & Vitamin D3 Powder',   cat:'reptiles',   emoji:'🦎', price:9.99,  rating:4.5, reviews:37,  img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400', isNew:false },
+];
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let cart    = [];
+let filter  = 'all';
+let search  = '';
+let sortBy  = 'default';
+
+// ═══════════════════════════════════════════
+// NAV SCROLL
+// ═══════════════════════════════════════════
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navbar.classList.toggle('scrolled', window.scrollY > 50);
+}, { passive: true });
+
+// ═══════════════════════════════════════════
+// HAMBURGER
+// ═══════════════════════════════════════════
+const ham   = document.getElementById('hamburger');
+const mobM  = document.getElementById('mob-menu');
+ham.addEventListener('click', () => {
+  ham.classList.toggle('open');
+  mobM.classList.toggle('open');
+});
+function closeMob() { ham.classList.remove('open'); mobM.classList.remove('open'); }
+
+// ═══════════════════════════════════════════
+// CART
+// ═══════════════════════════════════════════
+const cartOverlay = document.getElementById('cart-overlay');
+const cartDrawer  = document.getElementById('cart-drawer');
+const cartBadge   = document.getElementById('cart-badge');
+const cartBody    = document.getElementById('cart-body');
+const cartFoot    = document.getElementById('cart-foot');
+const cartTotal   = document.getElementById('cart-total');
+
+function openCart()  { cartOverlay.classList.add('open'); cartDrawer.classList.add('open'); document.body.style.overflow='hidden'; }
+function closeCart() { cartOverlay.classList.remove('open'); cartDrawer.classList.remove('open'); document.body.style.overflow=''; }
+
+document.getElementById('cart-toggle').addEventListener('click', openCart);
+document.getElementById('cart-close').addEventListener('click', closeCart);
+cartOverlay.addEventListener('click', closeCart);
+
+function addToCart(id) {
+  const p = PRODUCTS.find(x => x.id === id);
+  if (!p) return;
+  const ex = cart.find(x => x.id === id);
+  if (ex) ex.qty++;
+  else cart.push({ ...p, qty: 1 });
+  renderCart();
+  // bounce badge
+  cartBadge.style.transform = 'scale(1.5)';
+  setTimeout(() => { cartBadge.style.transform = ''; }, 200);
+}
+
+function removeFromCart(id) { cart = cart.filter(x => x.id !== id); renderCart(); }
+function updateQty(id, d) {
+  const item = cart.find(x => x.id === id);
+  if (!item) return;
+  item.qty += d;
+  if (item.qty <= 0) removeFromCart(id);
+  else renderCart();
+}
+
+function renderCart() {
+  const total = cart.reduce((s, x) => s + x.qty, 0);
+  cartBadge.textContent = total;
+  cartBadge.classList.toggle('show', total > 0);
+
+  if (!cart.length) {
+    cartBody.innerHTML = `<div class="cart-empty"><div class="cart-empty-icon">🛒</div><p>Your cart is empty</p><p style="font-size:.8rem;color:var(--gray);margin-top:8px">Add some products to get started!</p></div>`;
+    cartFoot.style.display = 'none';
+    return;
+  }
+
+  cartBody.innerHTML = cart.map(x => `
+    <div class="cart-item">
+      <div class="cart-item-img"><img src="${x.img}" alt="${x.name}" loading="lazy" onerror="this.src='https://placehold.co/60x60/1A1A1A/CC0000?text=PS'"></div>
+      <div class="cart-item-info">
+        <div class="cart-item-name">${x.name}</div>
+        <div class="cart-item-price">£${(x.price * x.qty).toFixed(2)}</div>
+        <div class="cart-item-row">
+          <button class="qty-btn" onclick="updateQty(${x.id},-1)">−</button>
+          <span class="qty-num">${x.qty}</span>
+          <button class="qty-btn" onclick="updateQty(${x.id},1)">+</button>
+          <button class="rm-btn" onclick="removeFromCart(${x.id})">✕ Remove</button>
+        </div>
+      </div>
+    </div>`).join('');
+
+  const totalPrice = cart.reduce((s, x) => s + x.price * x.qty, 0);
+  cartTotal.textContent = `£${totalPrice.toFixed(2)}`;
+  cartFoot.style.display = 'block';
+}
+
+// ═══════════════════════════════════════════
+// PRODUCTS
+// ═══════════════════════════════════════════
+function stars(r) {
+  const full = Math.floor(r), half = r % 1 >= 0.5;
+  return '★'.repeat(full) + (half ? '½' : '');
+}
+
+function capWords(s) {
+  return s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function renderProducts() {
+  let list = [...PRODUCTS];
+  if (filter !== 'all')  list = list.filter(p => p.cat === filter);
+  if (search) { const q = search.toLowerCase(); list = list.filter(p => p.name.toLowerCase().includes(q) || p.cat.includes(q)); }
+  switch (sortBy) {
+    case 'price-asc':  list.sort((a,b) => a.price - b.price); break;
+    case 'price-desc': list.sort((a,b) => b.price - a.price); break;
+    case 'rating':     list.sort((a,b) => b.rating - a.rating); break;
+    case 'newest':     list.sort((a,b) => (b.isNew?1:0) - (a.isNew?1:0)); break;
+  }
+
+  document.getElementById('count-n').textContent = list.length;
+  const grid = document.getElementById('prod-grid');
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="no-prod">😔 No products found. Try a different search or filter.</div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(p => `
+    <div class="prod-card">
+      <div class="prod-img">
+        <img src="${p.img}" alt="${p.name}" loading="lazy" onerror="this.src='https://placehold.co/400x300/1A1A1A/CC0000?text=Pet+Shop'">
+        <span class="prod-cat-badge">${p.emoji} ${capWords(p.cat)}</span>
+        ${p.isNew ? '<span class="prod-new-badge">New</span>' : ''}
+      </div>
+      <div class="prod-info">
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-rating">
+          <span class="stars">${stars(p.rating)}</span>
+          <span class="rev-ct">${p.rating} (${p.reviews})</span>
+        </div>
+        <div class="prod-foot">
+          <div class="prod-price">£${p.price.toFixed(2)}</div>
+          <button class="atc-btn" onclick="addToCart(${p.id})">Add to Cart</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════
+// FILTERS
+// ═══════════════════════════════════════════
+document.querySelectorAll('.animal-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.animal-card').forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+    filter = card.dataset.filter;
+    renderProducts();
+    document.getElementById('shop').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+document.getElementById('search-inp').addEventListener('input', e => {
+  search = e.target.value.trim();
+  renderProducts();
+});
+
+document.getElementById('sort-sel').addEventListener('change', e => {
+  sortBy = e.target.value;
+  renderProducts();
+});
+
+// ═══════════════════════════════════════════
+// NEWSLETTER
+// ═══════════════════════════════════════════
+document.getElementById('nl-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('nl-btn');
+  btn.textContent = '✓ Subscribed!';
+  btn.style.background = '#1a7a1a';
+  btn.style.borderColor = '#1a7a1a';
+  setTimeout(() => {
+    btn.textContent = 'Subscribe 🐾';
+    btn.style.background = '';
+    btn.style.borderColor = '';
+    this.reset();
+  }, 3000);
+});
+
+// ═══════════════════════════════════════════
+// SCROLL REVEAL
+// ═══════════════════════════════════════════
+const revObs = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const delay = parseInt(entry.target.dataset.delay || '0');
+    setTimeout(() => entry.target.classList.add('in'), delay);
+    revObs.unobserve(entry.target);
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('[data-reveal]').forEach(el => revObs.observe(el));
+
+// ═══════════════════════════════════════════
+// PARTICLES (hero canvas)
+// ═══════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('hero-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let pts = [], raf;
+
+  function resize() {
+    canvas.width  = canvas.parentElement.offsetWidth;
+    canvas.height = canvas.parentElement.offsetHeight;
+  }
+
+  function mkPt(fresh) {
+    return {
+      x:  Math.random() * canvas.width,
+      y:  fresh ? canvas.height + 10 : Math.random() * canvas.height,
+      r:  Math.random() * 1.8 + .4,
+      vy: Math.random() * .55 + .2,
+      vx: (Math.random() - .5) * .3,
+      a:  Math.random() * .5 + .15,
+      drift: Math.random() * Math.PI * 2,
+    };
+  }
+
+  function init() {
+    resize();
+    pts = Array.from({ length: 55 }, () => mkPt(false));
+  }
+
+  function tick() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pts.forEach(p => {
+      p.drift += .018;
+      p.x += Math.sin(p.drift) * .35 + p.vx;
+      p.y -= p.vy;
+      p.a += (Math.random() - .5) * .015;
+      p.a = Math.max(.08, Math.min(.65, p.a));
+      if (p.y < -8) Object.assign(p, mkPt(true));
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(204,0,0,${p.a})`;
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = 'rgba(204,0,0,.4)';
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    });
+    raf = requestAnimationFrame(tick);
+  }
+
+  window.addEventListener('resize', resize, { passive: true });
+  init();
+  tick();
+})();
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+renderProducts();
+renderCart();
+</script>
+</body>
+</html>
